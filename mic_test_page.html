@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microphone Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 10px 10px 0;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .visualizer {
+            height: 100px;
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 10px;
+        }
+        
+        .bar {
+            width: 8px;
+            background: #667eea;
+            border-radius: 4px;
+            transition: height 0.1s;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+        }
+        
+        .info-box li {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Microphone Diagnostic Tool</h1>
+        
+        <!-- Test 1: Browser Support -->
+        <div class="test-section">
+            <h2>1️⃣ Browser Support Check</h2>
+            <div id="browserCheck"></div>
+        </div>
+        
+        <!-- Test 2: Permission Status -->
+        <div class="test-section">
+            <h2>2️⃣ Microphone Permission</h2>
+            <button onclick="requestMicrophone()">Request Microphone Access</button>
+            <div id="permissionStatus"></div>
+        </div>
+        
+        <!-- Test 3: Available Devices -->
+        <div class="test-section">
+            <h2>3️⃣ Audio Devices</h2>
+            <button onclick="listDevices()">List Audio Devices</button>
+            <div id="devicesList"></div>
+        </div>
+        
+        <!-- Test 4: Live Test -->
+        <div class="test-section">
+            <h2>4️⃣ Live Microphone Test</h2>
+            <button onclick="startTest()" id="testBtn">Start Test</button>
+            <button onclick="stopTest()" id="stopBtn" disabled>Stop Test</button>
+            <div id="testStatus"></div>
+            <div class="visualizer" id="visualizer" style="display: none;">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+        
+        <!-- Troubleshooting Guide -->
+        <div class="info-box">
+            <h3>🔧 Troubleshooting Steps:</h3>
+            <ul>
+                <li><strong>Chrome/Edge:</strong> Click the 🔒 or 🛈 icon in address bar → Site settings → Allow Microphone</li>
+                <li><strong>Firefox:</strong> Click the 🔒 icon → Permissions → Microphone → Allow</li>
+                <li><strong>Safari:</strong> Safari → Settings → Websites → Microphone → Allow</li>
+                <li><strong>File opened directly?</strong> Try using: <code>python -m http.server 8080</code> then open <code>http://localhost:8080/mic_test.html</code></li>
+                <li><strong>Check Windows Settings:</strong> Settings → Privacy → Microphone → Allow apps to access</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let stream;
+        let audioContext;
+        let analyser;
+        let animationId;
+        
+        // Test 1: Browser Support
+        window.addEventListener('load', checkBrowserSupport);
+        
+        function checkBrowserSupport() {
+            const browserCheck = document.getElementById('browserCheck');
+            
+            let html = '';
+            
+            // Check getUserMedia support
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                html += '<div class="status success">✅ Browser supports microphone access (getUserMedia)</div>';
+            } else {
+                html += '<div class="status error">❌ Browser does NOT support getUserMedia API</div>';
+                html += '<div class="status warning">⚠️ Try using Chrome, Edge, or Firefox</div>';
+            }
+            
+            // Check HTTPS or localhost
+            const isSecure = window.location.protocol === 'https:' || 
+                           window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+            
+            if (isSecure) {
+                html += '<div class="status success">✅ Page is secure (HTTPS or localhost)</div>';
+            } else {
+                html += '<div class="status error">❌ Page is NOT secure! Microphone requires HTTPS or localhost</div>';
+                html += '<div class="status warning">⚠️ Open file via localhost or use Python server</div>';
+            }
+            
+            // Browser info
+            html += `<div class="status info">ℹ️ Browser: ${navigator.userAgent}</div>`;
+            
+            browserCheck.innerHTML = html;
+        }
+        
+        // Test 2: Request Microphone
+        async function requestMicrophone() {
+            const status = document.getElementById('permissionStatus');
+            status.innerHTML = '<div class="status info">🔄 Requesting microphone access...</div>';
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                
+                status.innerHTML = '<div class="status success">✅ Microphone access GRANTED! You can use the voice assistant.</div>';
+                
+                // Enable test button
+                document.getElementById('testBtn').disabled = false;
+                
+                // List devices after permission granted
+                await listDevices();
+                
+            } catch (error) {
+                let errorMsg = '';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMsg = '❌ Permission DENIED by user<br><br>How to fix:<br>1. Click the 🔒 or camera icon in your browser address bar<br>2. Set Microphone to "Allow"<br>3. Refresh the page';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg = '❌ No microphone found<br><br>Check:<br>1. Is your microphone plugged in?<br>2. Windows Settings → Sound → Input devices';
+                } else if (error.name === 'NotReadableError') {
+                    errorMsg = '❌ Microphone is in use by another application<br><br>Close other apps using microphone (Zoom, Discord, etc.)';
+                } else {
+                    errorMsg = `❌ Error: ${error.name}<br>${error.message}`;
+                }
+                
+                status.innerHTML = `<div class="status error">${errorMsg}</div>`;
+                console.error('Microphone error:', error);
+            }
+        }
+        
+        // Test 3: List Devices
+        async function listDevices() {
+            const devicesList = document.getElementById('devicesList');
+            
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                
+                if (audioInputs.length === 0) {
+                    devicesList.innerHTML = '<div class="status error">❌ No audio input devices found</div>';
+                    return;
+                }
+                
+                let html = `<div class="status success">✅ Found ${audioInputs.length} audio input device(s):</div>`;
+                
+                audioInputs.forEach((device, index) => {
+                    const label = device.label || `Microphone ${index + 1}`;
+                    const isDefault = index === 0 ? ' (Default)' : '';
+                    html += `<div class="status info">🎤 ${label}${isDefault}</div>`;
+                });
+                
+                devicesList.innerHTML = html;
+                
+            } catch (error) {
+                devicesList.innerHTML = `<div class="status error">❌ Could not list devices: ${error.message}</div>`;
+            }
+        }
+        
+        // Test 4: Live Test
+        async function startTest() {
+            if (!stream) {
+                document.getElementById('testStatus').innerHTML = 
+                    '<div class="status warning">⚠️ Please request microphone access first</div>';
+                return;
+            }
+            
+            const testStatus = document.getElementById('testStatus');
+            const visualizer = document.getElementById('visualizer');
+            
+            try {
+                // Set up audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                
+                visualizer.style.display = 'flex';
+                testStatus.innerHTML = '<div class="status success">✅ Microphone is working! Speak to see the bars move.</div>';
+                
+                document.getElementById('testBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                // Start visualization
+                visualize();
+                
+            } catch (error) {
+                testStatus.innerHTML = `<div class="status error">❌ Test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function visualize() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                
+                analyser.getByteFrequencyData(dataArray);
+                
+                const bars = document.querySelectorAll('.bar');
+                bars.forEach((bar, index) => {
+                    const value = dataArray[index * 4] || 0;
+                    const height = (value / 255) * 80 + 10;
+                    bar.style.height = height + 'px';
+                });
+            }
+            
+            draw();
+        }
+        
+        function stopTest() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            document.getElementById('visualizer').style.display = 'none';
+            document.getElementById('testStatus').innerHTML = 
+                '<div class="status info">Test stopped. Click "Start Test" to try again.</div>';
+            
+            document.getElementById('testBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+    </script>
+</body>
+</html>

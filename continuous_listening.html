@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lithuanian Voice Assistant - Continuous Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .mode-btn {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .mode-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .main-control {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .power-button {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            font-size: 70px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+        }
+        
+        .power-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .power-button.active {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 10px 30px rgba(220, 53, 69, 0.5); }
+            50% { box-shadow: 0 10px 50px rgba(220, 53, 69, 0.8); }
+        }
+        
+        .status {
+            margin-top: 20px;
+            font-size: 1.3em;
+            color: #666;
+            min-height: 40px;
+        }
+        
+        .listening-indicator {
+            display: none;
+            margin: 20px auto;
+            width: 200px;
+        }
+        
+        .listening-indicator.active {
+            display: block;
+        }
+        
+        .wave {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .wave-bar {
+            width: 8px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            animation: wave-animation 1s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+        
+        @keyframes wave-animation {
+            0%, 100% { height: 20px; }
+            50% { height: 60px; }
+        }
+        
+        .settings-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .setting-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        select, input[type="range"] {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+        }
+        
+        .conversation {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .message.user {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            margin-left: 20px;
+        }
+        
+        .message.assistant {
+            background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+            margin-right: 20px;
+        }
+        
+        .message .label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .message .text {
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Continuous Voice Assistant</h1>
+        <p class="subtitle">Always listening mode - just start talking!</p>
+        
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="setMode('continuous')">
+                🔄 Continuous Mode
+            </button>
+            <button class="mode-btn" onclick="setMode('push-to-talk')">
+                🎤 Push-to-Talk
+            </button>
+        </div>
+        
+        <!-- Settings -->
+        <div class="settings-panel">
+            <div class="setting-row">
+                <span class="setting-label">Voice:</span>
+                <select id="voiceSelect">
+                    <option value="lt-LT-LeonasNeural">Leonas (Male)</option>
+                    <option value="lt-LT-OnaNeural" selected>Ona (Female)</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">Silence Detection (seconds):</span>
+                <input type="range" id="silenceThreshold" min="1" max="5" value="2" step="0.5">
+                <span id="silenceValue">2.0s</span>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">Auto-play Responses:</span>
+                <input type="checkbox" id="autoPlay" checked>
+            </div>
+        </div>
+        
+        <!-- Main Control -->
+        <div class="main-control">
+            <button class="power-button" id="powerButton" onclick="toggleListening()">
+                ⏸️
+            </button>
+            <div class="status" id="status">Click to start continuous listening</div>
+        </div>
+        
+        <!-- Listening Indicator -->
+        <div class="listening-indicator" id="listeningIndicator">
+            <div class="wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+        </div>
+        
+        <!-- Conversation History -->
+        <div class="conversation" id="conversation">
+            <p style="text-align: center; color: #999;">Start listening to begin conversation...</p>
+        </div>
+    </div>
+
+    <script>
+        const ULTRAVOX_URL = 'http://localhost:8000';
+        const TTS_URL = 'http://localhost:5003';
+        
+        let isListening = false;
+        let mode = 'continuous';
+        let mediaRecorder;
+        let audioChunks = [];
+        let stream;
+        let silenceTimer;
+        let audioContext;
+        let analyser;
+        
+        // Initialize
+        window.addEventListener('load', async () => {
+            await requestMicrophonePermission();
+            updateSilenceLabel();
+            
+            document.getElementById('silenceThreshold').addEventListener('input', (e) => {
+                document.getElementById('silenceValue').textContent = e.target.value + 's';
+            });
+        });
+        
+        async function requestMicrophonePermission() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                
+                // Set up audio analysis
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                
+                updateStatus('✅ Microphone ready. Click to start!');
+            } catch (error) {
+                updateStatus('❌ Microphone access denied');
+                console.error('Microphone error:', error);
+            }
+        }
+        
+        function setMode(newMode) {
+            mode = newMode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (isListening) {
+                stopListening();
+            }
+            
+            if (mode === 'continuous') {
+                updateStatus('Continuous mode: Always listening');
+                document.getElementById('powerButton').textContent = '⏸️';
+            } else {
+                updateStatus('Push-to-talk mode: Hold to speak');
+                document.getElementById('powerButton').textContent = '🎤';
+            }
+        }
+        
+        function toggleListening() {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+        
+        function startListening() {
+            if (!stream) {
+                updateStatus('❌ Microphone not available');
+                return;
+            }
+            
+            isListening = true;
+            audioChunks = [];
+            
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                if (audioChunks.length > 0) {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await processAudio(audioBlob);
+                }
+                
+                // In continuous mode, start recording again after processing
+                if (isListening && mode === 'continuous') {
+                    setTimeout(() => {
+                        audioChunks = [];
+                        if (mediaRecorder && isListening) {
+                            mediaRecorder.start();
+                            detectSilence();
+                        }
+                    }, 1000);
+                }
+            };
+            
+            mediaRecorder.start();
+            
+            document.getElementById('powerButton').classList.add('active');
+            document.getElementById('powerButton').textContent = '⏹️';
+            document.getElementById('listeningIndicator').classList.add('active');
+            
+            if (mode === 'continuous') {
+                updateStatus('🎤 Listening continuously... Speak naturally');
+                detectSilence();
+            } else {
+                updateStatus('🔴 Recording... Release to send');
+            }
+        }
+        
+        function detectSilence() {
+            if (!isListening || !analyser) return;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume
+            const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+            
+            // If sound detected, reset silence timer
+            if (average > 5) {
+                clearTimeout(silenceTimer);
+                
+                const threshold = parseFloat(document.getElementById('silenceThreshold').value) * 1000;
+                
+                silenceTimer = setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, threshold);
+            }
+            
+            // Continue checking
+            if (isListening) {
+                requestAnimationFrame(detectSilence);
+            }
+        }
+        
+        function stopListening() {
+            isListening = false;
+            clearTimeout(silenceTimer);
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            document.getElementById('powerButton').classList.remove('active');
+            document.getElementById('powerButton').textContent = mode === 'continuous' ? '⏸️' : '🎤';
+            document.getElementById('listeningIndicator').classList.remove('active');
+            
+            updateStatus('⏸️ Paused. Click to resume listening');
+        }
+        
+        async function processAudio(audioBlob) {
+            try {
+                updateStatus('📝 Transcribing...');
+                
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+                formData.append('language', 'lt');
+                
+                const response = await fetch(`${ULTRAVOX_URL}/transcribe`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Transcription failed');
+                
+                const data = await response.json();
+                const transcription = data.transcription.trim();
+                
+                // Ignore very short or empty transcriptions
+                if (transcription.length < 3) {
+                    updateStatus('🎤 Listening... (no speech detected)');
+                    return;
+                }
+                
+                addMessage('user', transcription);
+                
+                // Generate and speak response
+                updateStatus('💭 Generating response...');
+                const response_text = generateResponse(transcription);
+                
+                updateStatus('🔊 Speaking...');
+                const audioUrl = await synthesizeSpeech(response_text);
+                
+                addMessage('assistant', response_text, audioUrl);
+                
+                updateStatus('🎤 Listening...');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('❌ Error: ' + error.message);
+            }
+        }
+        
+        async function synthesizeSpeech(text) {
+            const voice = document.getElementById('voiceSelect').value;
+            
+            const response = await fetch(`${TTS_URL}/synthesize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, voice, rate: '0%', pitch: '0%' })
+            });
+            
+            if (!response.ok) throw new Error('TTS failed');
+            
+            const data = await response.json();
+            const audioBytes = atob(data.audio_base64);
+            const audioArray = new Uint8Array(audioBytes.length);
+            for (let i = 0; i < audioBytes.length; i++) {
+                audioArray[i] = audioBytes.charCodeAt(i);
+            }
+            const audioBlob = new Blob([audioArray], { type: 'audio/mp3' });
+            
+            return URL.createObjectURL(audioBlob);
+        }
+        
+        function generateResponse(userText) {
+            // Add your AI logic here!
+            const responses = [
+                `Supratau. Jūs pasakėte: "${userText}". Kaip galiu padėti?`,
+                `Gerai, girdžiu: "${userText}". Ką dar norėtumėte žinoti?`,
+                `Aš klausausi. Jūs pasakėte: "${userText}".`
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+        
+        function addMessage(type, text, audioUrl = null) {
+            const conversation = document.getElementById('conversation');
+            
+            if (conversation.querySelector('p')) {
+                conversation.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('lt-LT');
+            
+            messageDiv.innerHTML = `
+                <div class="label">
+                    ${type === 'user' ? '👤 Jūs' : '🤖 Asistentas'}
+                    <span class="timestamp">${timestamp}</span>
+                </div>
+                <div class="text">${text}</div>
+            `;
+            
+            if (audioUrl && document.getElementById('autoPlay').checked) {
+                const audio = new Audio(audioUrl);
+                audio.play();
+            }
+            
+            conversation.appendChild(messageDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        function updateSilenceLabel() {
+            const value = document.getElementById('silenceThreshold').value;
+            document.getElementById('silenceValue').textContent = value + 's';
+        }
+    </script>
+</body>
+</html>

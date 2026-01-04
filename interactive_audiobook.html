@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktyvi Audioknygą</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .book-cover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .book-cover h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .book-cover .author {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .player {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .chapter-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .chapter-number {
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .chapter-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .story-text {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            min-height: 200px;
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .choices {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .choices.visible {
+            display: block;
+        }
+        
+        .choice-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .choice-btn:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .control-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .control-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            font-size: 35px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .mic-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .mic-button.listening {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .voice-command-help {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #333;
+        }
+        
+        .voice-command-help h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .voice-command-help .commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .command-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .command-item strong {
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-message.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .audio-visualizer {
+            display: none;
+            height: 60px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        
+        .audio-visualizer.active {
+            display: flex;
+        }
+        
+        .viz-bar {
+            width: 5px;
+            background: #667eea;
+            border-radius: 3px;
+            transition: height 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Book Cover -->
+        <div class="book-cover">
+            <h1 id="bookTitle">Nuotykių Sala</h1>
+            <p class="author">Interaktyvi Audioknygą</p>
+        </div>
+        
+        <!-- Player -->
+        <div class="player">
+            <!-- Chapter Info -->
+            <div class="chapter-info">
+                <div class="chapter-number" id="chapterNumber">Skyrius 1</div>
+                <div class="chapter-title" id="chapterTitle">Pradžia</div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            
+            <!-- Story Text -->
+            <div class="story-text" id="storyText">
+                Paruošiama istorija...
+            </div>
+            
+            <!-- Choices (for branching stories) -->
+            <div class="choices" id="choices"></div>
+            
+            <!-- Audio Visualizer -->
+            <div class="audio-visualizer" id="visualizer">
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+                <div class="viz-bar"></div>
+            </div>
+            
+            <!-- Status Message -->
+            <div class="status-message info" id="statusMessage">
+                Paspauskite "Paleisti" kad pradėtumėte klausytis
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn secondary" onclick="previousChapter()" id="prevBtn">⏮️ Ankstesnis</button>
+                <button class="control-btn primary" onclick="playCurrentChapter()" id="playBtn">▶️ Paleisti</button>
+                <button class="control-btn secondary" onclick="pauseAudio()" id="pauseBtn" style="display:none">⏸️ Pauzė</button>
+                <button class="control-btn secondary" onclick="nextChapter()" id="nextBtn">Kitas ⏭️</button>
+                <button class="mic-button" onclick="toggleVoiceControl()" id="micBtn" title="Balso valdymas">🎤</button>
+            </div>
+            
+            <!-- Voice Command Help -->
+            <div class="voice-command-help">
+                <h3>🎤 Balso komandos:</h3>
+                <div class="commands">
+                    <div class="command-item"><strong>"Paleisti"</strong> - Pradėti skaitymą</div>
+                    <div class="command-item"><strong>"Pauzė"</strong> - Sustabdyti</div>
+                    <div class="command-item"><strong>"Kitas"</strong> - Sekantis skyrius</div>
+                    <div class="command-item"><strong>"Ankstesnis"</strong> - Ankstesnis skyrius</div>
+                    <div class="command-item"><strong>"Kartok"</strong> - Pakartoti skyrių</div>
+                    <div class="command-item"><strong>"Pradžia"</strong> - Grįžti į pradžią</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TTS_URL = 'http://localhost:5003';
+        const STT_URL = 'http://localhost:8000';
+        
+        // Story data - You can replace this with your own story!
+        const storyData = {
+            title: "Nuotykių Sala",
+            chapters: [
+                {
+                    number: 1,
+                    title: "Pradžia",
+                    text: "Jūs atsibustate paslaptingoje saloje. Jūsų atmintyje tik miglotos nuotraukos apie audringą naktį ir skęstantį laivą. Priešais jus – tankus miškas ir šiurkštus kalnas. Ką darote?",
+                    choices: [
+                        { text: "Eiti į mišką", nextChapter: 2 },
+                        { text: "Lipti į kalną", nextChapter: 3 }
+                    ]
+                },
+                {
+                    number: 2,
+                    title: "Miškas",
+                    text: "Miške jūs radate seną trobelę. Durys praviros. Iš vidaus sklinda keistas garsas. Įeisite į vidų ar tęsite kelionę toliau?",
+                    choices: [
+                        { text: "Įeiti į trobelę", nextChapter: 4 },
+                        { text: "Apeiti trobelę", nextChapter: 5 }
+                    ]
+                },
+                {
+                    number: 3,
+                    title: "Kalnas",
+                    text: "Pakilę į kalną, matote visą salą. Rytuose – dūmai iš ugnikalnio. Vakaruose – nedidelė gyvenvietė prie jūros. Kur eisite?",
+                    choices: [
+                        { text: "Eiti prie ugnikalnio", nextChapter: 6 },
+                        { text: "Eiti į gyvenvietę", nextChapter: 7 }
+                    ]
+                },
+                {
+                    number: 4,
+                    title: "Trobelė",
+                    text: "Viduje radate seną žemėlapį su X ženklu ir kompasą. Tai vertingos priemonės! Dabar galite rasti kelią į laisvę.",
+                    choices: [
+                        { text: "Pradėti iš naujo", nextChapter: 1 }
+                    ]
+                },
+                {
+                    number: 5,
+                    title: "Kelias per mišką",
+                    text: "Tęsdami kelionę, išeinat prie jūros. Matote tolumoje laivą! Jūs išgelbėti!",
+                    choices: [
+                        { text: "Pradėti iš naujo", nextChapter: 1 }
+                    ]
+                },
+                {
+                    number: 6,
+                    title: "Ugnikalnis",
+                    text: "Prie ugnikalnio radate senovinį altorių. Ant jo – raštas: 'Kas drąsus, tas ras kelią'. Po altoriumi – tunnelis vedantis į laisvę!",
+                    choices: [
+                        { text: "Pradėti iš naujo", nextChapter: 1 }
+                    ]
+                },
+                {
+                    number: 7,
+                    title: "Gyvenvietė",
+                    text: "Gyvenvietėje sutinkate draugiškus žvejus. Jie siūlo nuvežti jus į namus. Nuotykis baigtas!",
+                    choices: [
+                        { text: "Pradėti iš naujo", nextChapter: 1 }
+                    ]
+                }
+            ]
+        };
+        
+        let currentChapterIndex = 0;
+        let isPlaying = false;
+        let isListening = false;
+        let currentAudio = null;
+        let mediaRecorder;
+        let stream;
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            requestMicrophonePermission();
+            loadChapter(0);
+        });
+        
+        async function requestMicrophonePermission() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (error) {
+                console.error('Microphone error:', error);
+            }
+        }
+        
+        function loadChapter(index) {
+            if (index < 0 || index >= storyData.chapters.length) return;
+            
+            currentChapterIndex = index;
+            const chapter = storyData.chapters[index];
+            
+            document.getElementById('chapterNumber').textContent = `Skyrius ${chapter.number}`;
+            document.getElementById('chapterTitle').textContent = chapter.title;
+            document.getElementById('storyText').textContent = chapter.text;
+            
+            // Update progress
+            const progress = ((index + 1) / storyData.chapters.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            // Show choices if available
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+            
+            if (chapter.choices && chapter.choices.length > 0) {
+                chapter.choices.forEach(choice => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text;
+                    btn.onclick = () => makeChoice(choice.nextChapter);
+                    choicesDiv.appendChild(btn);
+                });
+                choicesDiv.classList.add('visible');
+            } else {
+                choicesDiv.classList.remove('visible');
+            }
+            
+            // Update buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === storyData.chapters.length - 1;
+            
+            // Save progress
+            localStorage.setItem('audiobook_progress', index);
+        }
+        
+        async function playCurrentChapter() {
+            const chapter = storyData.chapters[currentChapterIndex];
+            
+            document.getElementById('statusMessage').textContent = '🔊 Skaitoma...';
+            document.getElementById('statusMessage').className = 'status-message info';
+            document.getElementById('playBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            document.getElementById('visualizer').classList.add('active');
+            
+            isPlaying = true;
+            animateVisualizer();
+            
+            try {
+                const audioUrl = await synthesizeSpeech(chapter.text);
+                
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
+                
+                currentAudio = new Audio(audioUrl);
+                currentAudio.play();
+                
+                currentAudio.onended = () => {
+                    isPlaying = false;
+                    document.getElementById('visualizer').classList.remove('active');
+                    document.getElementById('statusMessage').textContent = '✅ Skyrius baigtas';
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    document.getElementById('playBtn').style.display = 'inline-block';
+                    document.getElementById('pauseBtn').style.display = 'none';
+                };
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('statusMessage').textContent = '❌ Klaida: ' + error.message;
+                document.getElementById('statusMessage').className = 'status-message warning';
+                isPlaying = false;
+            }
+        }
+        
+        function pauseAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                isPlaying = false;
+                document.getElementById('visualizer').classList.remove('active');
+                document.getElementById('statusMessage').textContent = '⏸️ Pauzė';
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+            }
+        }
+        
+        function nextChapter() {
+            if (currentChapterIndex < storyData.chapters.length - 1) {
+                pauseAudio();
+                loadChapter(currentChapterIndex + 1);
+            }
+        }
+        
+        function previousChapter() {
+            if (currentChapterIndex > 0) {
+                pauseAudio();
+                loadChapter(currentChapterIndex - 1);
+            }
+        }
+        
+        function makeChoice(nextChapterNumber) {
+            pauseAudio();
+            const index = storyData.chapters.findIndex(ch => ch.number === nextChapterNumber);
+            if (index !== -1) {
+                loadChapter(index);
+            }
+        }
+        
+        async function synthesizeSpeech(text) {
+            const response = await fetch(`${TTS_URL}/synthesize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    voice: 'lt-LT-LeonasNeural',
+                    rate: '0%',
+                    pitch: '0%'
+                })
+            });
+            
+            if (!response.ok) throw new Error('TTS nepavyko');
+            
+            const data = await response.json();
+            const audioBytes = atob(data.audio_base64);
+            const audioArray = new Uint8Array(audioBytes.length);
+            for (let i = 0; i < audioBytes.length; i++) {
+                audioArray[i] = audioBytes.charCodeAt(i);
+            }
+            const audioBlob = new Blob([audioArray], { type: 'audio/mp3' });
+            
+            return URL.createObjectURL(audioBlob);
+        }
+        
+        // Voice Control
+        async function toggleVoiceControl() {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+        
+        async function startListening() {
+            if (!stream) {
+                alert('Mikrofonas nepasiekiamas');
+                return;
+            }
+            
+            isListening = true;
+            document.getElementById('micBtn').classList.add('listening');
+            document.getElementById('statusMessage').textContent = '🎤 Klausausi komandos...';
+            
+            const audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                await processVoiceCommand(audioBlob);
+            };
+            
+            mediaRecorder.start();
+            
+            // Auto-stop after 3 seconds
+            setTimeout(() => {
+                if (isListening) {
+                    stopListening();
+                }
+            }, 3000);
+        }
+        
+        function stopListening() {
+            isListening = false;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            document.getElementById('micBtn').classList.remove('listening');
+        }
+        
+        async function processVoiceCommand(audioBlob) {
+            try {
+                document.getElementById('statusMessage').textContent = '🔄 Apdorojama komanda...';
+                
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'command.wav');
+                formData.append('language', 'lt');
+                
+                const response = await fetch(`${STT_URL}/transcribe`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Atpažinimas nepavyko');
+                
+                const data = await response.json();
+                const command = data.transcription.toLowerCase().trim();
+                
+                document.getElementById('statusMessage').textContent = `📝 Komanda: "${command}"`;
+                
+                // Execute command
+                setTimeout(() => executeCommand(command), 500);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('statusMessage').textContent = '❌ Komandos klaida';
+            }
+        }
+        
+        function executeCommand(command) {
+            if (command.includes('paleisti') || command.includes('grot') || command.includes('pradėti')) {
+                playCurrentChapter();
+            } else if (command.includes('pauzė') || command.includes('sustabdyti') || command.includes('stop')) {
+                pauseAudio();
+            } else if (command.includes('kitas') || command.includes('sekantis')) {
+                nextChapter();
+            } else if (command.includes('ankstesnis') || command.includes('atgal')) {
+                previousChapter();
+            } else if (command.includes('kartok') || command.includes('pakartoti')) {
+                playCurrentChapter();
+            } else if (command.includes('pradžia') || command.includes('pradzia')) {
+                pauseAudio();
+                loadChapter(0);
+            } else {
+                document.getElementById('statusMessage').textContent = '❓ Komanda neatpažinta. Bandykite: "paleisti", "pauzė", "kitas"...';
+                document.getElementById('statusMessage').className = 'status-message warning';
+            }
+        }
+        
+        function animateVisualizer() {
+            if (!isPlaying) return;
+            
+            const bars = document.querySelectorAll('.viz-bar');
+            bars.forEach(bar => {
+                const height = Math.random() * 40 + 10;
+                bar.style.height = height + 'px';
+            });
+            
+            setTimeout(animateVisualizer, 100);
+        }
+        
+        // Load saved progress on start
+        const savedProgress = localStorage.getItem('audiobook_progress');
+        if (savedProgress) {
+            loadChapter(parseInt(savedProgress));
+        }
+    </script>
+</body>
+</html>

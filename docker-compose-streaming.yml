@@ -1,0 +1,41 @@
+services:
+  # Ultravox Service (STT)
+  ultravox:
+    image: pytorch/pytorch:2.3.0-cuda11.8-cudnn8-runtime
+    container_name: ultravox-server
+    volumes:
+      - ./ultravox:/app
+      - ./models:/models
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    command: >
+      bash -c "
+      pip install --upgrade pip &&
+      pip install transformers==4.44.0 torch==2.3.0 torchaudio==2.3.0 fastapi==0.104.1 uvicorn[standard]==0.24.0 librosa python-multipart &&
+      python server.py
+      "
+    networks:
+      - ultravox-net
+    restart: unless-stopped
+
+  # Azure TTS with STREAMING support
+  azure-tts-streaming:
+    build:
+      context: .
+      dockerfile: Dockerfile.azure-tts-streaming
+    container_name: azure-tts-streaming
+    ports:
+      - "5003:5003"
+    environment:
+      - AZURE_SPEECH_KEY=${AZURE_SPEECH_KEY}
+      - AZURE_SPEECH_REGION=${AZURE_SPEECH_REGION:-westeurope}
+    networks:
+      - ultravox-net
+    restart: unless-stopped
+
+networks:
+  ultravox-net:
+    driver: bridge
