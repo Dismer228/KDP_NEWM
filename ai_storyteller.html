@@ -289,6 +289,27 @@
             0%, 100% { height: 20px; }
             50% { height: 60px; }
         }
+        .pill-btn {
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(102,126,234,0.3);
+            padding: 8px 18px;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .pill-btn:hover {
+            border-color: #667eea;
+            color: white;
+            background: rgba(102,126,234,0.15);
+        }
+        .pill-btn.active {
+            background: rgba(102,126,234,0.35);
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 0 12px rgba(102,126,234,0.3);
+        }
     </style>
 </head>
 <body>
@@ -349,7 +370,40 @@
                 🔄 Iš naujo
             </button>
         </div>
+        <!-- PERSONALIZACIJA -->
+        <div class="settings" style="margin-bottom: 20px;">
+            <h3 style="color: #667eea; margin-bottom: 20px;">🎭 Personalizacija</h3>
         
+            <!-- Žanras -->
+            <div class="setting-item">
+                <label>Žanras:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="pill-btn active" data-group="genre" data-value="fantasy" onclick="setPref(this)">🧙 Fantastika</button>
+                    <button class="pill-btn" data-group="genre" data-value="action" onclick="setPref(this)">⚔️ Veiksmas</button>
+                    <button class="pill-btn" data-group="genre" data-value="romance" onclick="setPref(this)">🌹 Romantika</button>
+                    <button class="pill-btn" data-group="genre" data-value="horror" onclick="setPref(this)">👻 Siaubas</button>
+                </div>
+            </div>
+        
+            <!-- Tempas -->
+            <div class="setting-item">
+                <label>Tempas:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="pill-btn" data-group="pace" data-value="slow" onclick="setPref(this)">🌊 Lėtas</button>
+                    <button class="pill-btn active" data-group="pace" data-value="medium" onclick="setPref(this)">🌿 Vidutinis</button>
+                    <button class="pill-btn" data-group="pace" data-value="fast" onclick="setPref(this)">⚡ Greitas</button>
+                </div>
+            </div>
+        
+            <!-- Dialogai -->
+            <div class="setting-item">
+                <label>Dialogų kiekis:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="pill-btn" data-group="dialogue" data-value="low" onclick="setPref(this)">📖 Mažai</button>
+                    <button class="pill-btn active" data-group="dialogue" data-value="medium" onclick="setPref(this)">💬 Vidutiniškai</button>
+                    <button class="pill-btn" data-group="dialogue" data-value="high" onclick="setPref(this)">🗣️ Daug</button>
+                </div>
+            </div>
         <!-- Settings -->
         <div class="settings">
             <h3>⚙️ Nustatymai</h3>
@@ -389,6 +443,54 @@
     </div>
 
     <script>
+                const prefs = {
+            genre:    'fantasy',
+            pace:     'medium',
+            dialogue: 'medium'
+        };
+        
+        const genreDesc = {
+            fantasy: 'epinė fantastika su magija ir paslaptingais pasauliais',
+            action:  'veiksmo kupina istorija su kovomis ir pavojais',
+            romance: 'romantiška istorija su jausmais ir santykiais',
+            horror:  'siaubo istorija su įtampa ir bauginančia atmosfera'
+        };
+        
+        const paceDesc = {
+            slow:   'Rašyk lėtai ir detaliai, aprašyk aplinką ir emocijas. Kiekvienas atsakymas – 3–4 sakiniai.',
+            medium: 'Subalansuok tempą. Kiekvienas atsakymas – 2–3 sakiniai.',
+            fast:   'Trumpi, dinamiški sakiniai. Veiksmas nesiliauja. Maksimaliai 2 sakiniai per atsakymą.'
+        };
+        
+        const dialogueDesc = {
+            low:    'Beveik jokių dialogų – pasakojimas trečiuoju asmeniu, aprašomojo stiliaus.',
+            medium: 'Šiek tiek dialogų tarp veikėjų, bet dominuoja pasakojimas.',
+            high:   'Daug dialogų – veikėjai aktyviai kalbasi, dialogai yra pasakojimo varomoji jėga.'
+        };
+        
+        function setPref(btn) {
+            const group = btn.dataset.group;
+            const value = btn.dataset.value;
+            prefs[group] = value;
+        
+            // Atnaujinti mygtukų stilius
+            document.querySelectorAll(`.pill-btn[data-group="${group}"]`)
+                    .forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        
+            // Atnaujinti JSON preview
+            document.getElementById('jsonPreview').textContent =
+                `{ "genre": "${prefs.genre}", "pace": "${prefs.pace}", "dialogue": "${prefs.dialogue}" }`;
+        }
+        
+        function buildSystemPrompt() {
+            return `Tu esi profesionalus lietuviškas pasakotojas. `
+                 + `Pasakok ${genreDesc[prefs.genre]} istoriją TIKTAI LIETUVIŲ kalba. `
+                 + `${paceDesc[prefs.pace]} `
+                 + `${dialogueDesc[prefs.dialogue]} `
+                 + `Tęsk istoriją natūraliai ir palik klausytoją įsitraukusį.`;
+        }
+        // ═══════════════════════════════
         const TTS_URL = 'http://localhost:5003';
         const STT_URL = 'http://localhost:8000';
         
@@ -563,7 +665,7 @@
                 // First message - start the story
                 messages.push({
                     role: 'system',
-                    content: `Tu esi profesionalus lietuviškas pasakotojas. Papasakok įdomią, įtraukiančią istoriją LIETUVIŲ kalba. Kiekvienas tavo atsakymas turėtų būti 2-3 sakinių ilgio, kad klausytojas galėtų lengvai sekti. Tęsk istoriją natūraliai ir kūrybiškai.`
+                    content: buildSystemPrompt()                 
                 });
                 messages.push({
                     role: 'user',
@@ -573,7 +675,7 @@
                 // Continue the story
                 messages.push({
                     role: 'system',
-                    content: `Tu esi profesionalus lietuviškas pasakotojas. Tęsk istoriją natūraliai. Kiekvienas atsakymas - 2-3 sakiniai LIETUVIŲ kalba.`
+                    content: buildSystemPrompt()
                 });
                 
                 // Add conversation history
